@@ -1,0 +1,629 @@
+/*
+================================================================================
+                          SOURCE CODE ANALYSIS
+                     Number System Converter Application
+================================================================================
+
+This file provides a comprehensive analysis of the main source code files:
+1. app.go - Go backend logic
+2. App.tsx - React frontend implementation
+
+================================================================================
+                              app.go ANALYSIS
+================================================================================
+*/
+
+/*
+PACKAGE AND IMPORTS STRUCTURE:
+------------------------------
+The Go backend uses the following key imports:
+*/
+package main
+
+import (
+    "context"
+    "fmt"
+    "math"
+    "strconv"
+    "strings"
+)
+
+/*
+CORE DATA STRUCTURES:
+--------------------
+The application defines several key structures for data exchange:
+*/
+
+// App struct - Main application context
+type App struct {
+    ctx context.Context
+}
+
+// ConversionResult - Result of a single conversion with steps
+type ConversionResult struct {
+    Result       string   `json:"result"`       // The converted number
+    Steps        []string `json:"steps"`        // Step-by-step explanation
+    IsValid      bool     `json:"isValid"`      // Validation status
+    ErrorMessage string   `json:"errorMessage"` // Error details if invalid
+}
+
+// AllConversionsResult - Results for all number systems
+type AllConversionsResult struct {
+    Binary       string `json:"binary"`       // Binary representation
+    Octal        string `json:"octal"`        // Octal representation
+    Decimal      string `json:"decimal"`      // Decimal representation
+    Hexadecimal  string `json:"hexadecimal"`  // Hexadecimal representation
+    IsValid      bool   `json:"isValid"`      // Overall validation status
+    ErrorMessage string `json:"errorMessage"` // Error details if invalid
+}
+
+/*
+MAIN CONVERSION FUNCTIONS:
+--------------------------
+*/
+
+// ConvertNumber - Primary conversion function exposed to frontend
+func (a *App) ConvertNumber(value string, fromBase, toBase int) ConversionResult {
+    // STEP 1: Input validation
+    cleanValue := removePrefix(strings.TrimSpace(value))
+    if err := validateInput(cleanValue, fromBase); err != nil {
+        return ConversionResult{
+            Result:       "",
+            Steps:        []string{},
+            IsValid:      false,
+            ErrorMessage: err.Error(),
+        }
+    }
+
+    // STEP 2: Convert to decimal (intermediate step)
+    decimal, err := convertToDecimal(cleanValue, fromBase)
+    if err != nil {
+        return ConversionResult{
+            Result:       "",
+            Steps:        []string{},
+            IsValid:      false,
+            ErrorMessage: err.Error(),
+        }
+    }
+
+    // STEP 3: Convert from decimal to target base
+    result := convertFromDecimal(decimal, toBase)
+
+    // STEP 4: Generate educational step-by-step explanation
+    steps := generateConversionSteps(cleanValue, fromBase, toBase, result, decimal)
+
+    return ConversionResult{
+        Result:       result,
+        Steps:        steps,
+        IsValid:      true,
+        ErrorMessage: "",
+    }
+}
+
+// ConvertToAllSystems - Batch conversion to all supported systems
+func (a *App) ConvertToAllSystems(value string, fromBase int) AllConversionsResult {
+    cleanValue := removePrefix(strings.TrimSpace(value))
+    
+    // Validate input
+    if err := validateInput(cleanValue, fromBase); err != nil {
+        return AllConversionsResult{
+            IsValid:      false,
+            ErrorMessage: err.Error(),
+        }
+    }
+
+    // Convert to decimal first (common intermediate)
+    decimal, err := convertToDecimal(cleanValue, fromBase)
+    if err != nil {
+        return AllConversionsResult{
+            IsValid:      false,
+            ErrorMessage: err.Error(),
+        }
+    }
+
+    // Convert to all target systems
+    return AllConversionsResult{
+        Binary:      convertFromDecimal(decimal, 2),
+        Octal:       convertFromDecimal(decimal, 8),
+        Decimal:     strconv.FormatInt(decimal, 10),
+        Hexadecimal: convertFromDecimal(decimal, 16),
+        IsValid:     true,
+    }
+}
+
+/*
+CORE ALGORITHM IMPLEMENTATIONS:
+------------------------------
+*/
+
+// validateInput - Comprehensive input validation
+func validateInput(value string, base int) error {
+    if value == "" {
+        return fmt.Errorf("input cannot be empty")
+    }
+
+    // Check each character against the base
+    for _, char := range strings.ToUpper(value) {
+        digitValue := getDigitValue(char)
+        if digitValue == -1 {
+            return fmt.Errorf("invalid character '%c'", char)
+        }
+        if digitValue >= base {
+            return fmt.Errorf("invalid digit '%c' for base %d", char, base)
+        }
+    }
+    return nil
+}
+
+// convertToDecimal - Convert from any base to decimal using positional notation
+func convertToDecimal(value string, fromBase int) (int64, error) {
+    var result int64 = 0
+    value = strings.ToUpper(value)
+
+    for i, char := range value {
+        digitValue := getDigitValue(char)
+        if digitValue == -1 || digitValue >= fromBase {
+            return 0, fmt.Errorf("invalid digit '%c' for base %d", char, fromBase)
+        }
+
+        // Calculate positional value: digit × base^position
+        power := len(value) - 1 - i
+        positionalValue := int64(digitValue) * int64(math.Pow(float64(fromBase), float64(power)))
+        result += positionalValue
+    }
+
+    return result, nil
+}
+
+// convertFromDecimal - Convert from decimal to any base using division method
+func convertFromDecimal(decimal int64, toBase int) string {
+    if decimal == 0 {
+        return "0"
+    }
+
+    digits := "0123456789ABCDEF"
+    result := ""
+
+    // Repeated division algorithm
+    for decimal > 0 {
+        remainder := decimal % int64(toBase)
+        result = string(digits[remainder]) + result
+        decimal = decimal / int64(toBase)
+    }
+
+    return result
+}
+
+// getDigitValue - Convert character to numeric value (0-9, A-F)
+func getDigitValue(char rune) int {
+    if char >= '0' && char <= '9' {
+        return int(char - '0')
+    }
+    if char >= 'A' && char <= 'F' {
+        return int(char - 'A' + 10)
+    }
+    return -1 // Invalid character
+}
+
+// removePrefix - Handle common number prefixes (0x, 0b, 0o)
+func removePrefix(value string) string {
+    value = strings.ToUpper(value)
+    if strings.HasPrefix(value, "0X") {
+        return value[2:]
+    }
+    if strings.HasPrefix(value, "0B") {
+        return value[2:]
+    }
+    if strings.HasPrefix(value, "0O") {
+        return value[2:]
+    }
+    return value
+}
+
+/*
+EDUCATIONAL STEP GENERATION:
+----------------------------
+*/
+
+// generateConversionSteps - Create detailed mathematical explanation
+func generateConversionSteps(value string, fromBase, toBase int, result string, decimal int64) []string {
+    var steps []string
+    stepNum := 1
+
+    // Step 1: Convert to decimal (if not already decimal)
+    if fromBase != 10 {
+        steps = append(steps, fmt.Sprintf("Step %d: Convert %s (base %d) to decimal", stepNum, value, fromBase))
+        
+        // Show positional notation calculation
+        value = strings.ToUpper(value)
+        for i, char := range value {
+            digitValue := getDigitValue(char)
+            power := len(value) - 1 - i
+            positionalValue := digitValue * int(math.Pow(float64(fromBase), float64(power)))
+            
+            if power == 0 {
+                steps = append(steps, fmt.Sprintf("%d × %d^%d = %d", digitValue, fromBase, power, positionalValue))
+            } else {
+                steps = append(steps, fmt.Sprintf("%d × %d^%d = %d", digitValue, fromBase, power, positionalValue))
+            }
+        }
+        
+        steps = append(steps, fmt.Sprintf("Sum: %d (decimal)", decimal))
+        steps = append(steps, "")
+        stepNum++
+    }
+
+    // Step 2: Convert from decimal to target base (if not decimal)
+    if toBase != 10 {
+        steps = append(steps, fmt.Sprintf("Step %d: Convert %d (decimal) to base %d", stepNum, decimal, toBase))
+        steps = append(steps, "Using the division method:")
+        
+        // Show division steps
+        tempDecimal := decimal
+        var divisionSteps []string
+        
+        for tempDecimal > 0 {
+            quotient := tempDecimal / int64(toBase)
+            remainder := tempDecimal % int64(toBase)
+            remainderChar := "0123456789ABCDEF"[remainder]
+            
+            divisionSteps = append([]string{fmt.Sprintf("%d ÷ %d = %d remainder %c", 
+                tempDecimal, toBase, quotient, remainderChar)}, divisionSteps...)
+            tempDecimal = quotient
+        }
+        
+        steps = append(steps, divisionSteps...)
+        steps = append(steps, fmt.Sprintf("Reading remainders from bottom to top: %s", result))
+    }
+
+    return steps
+}
+
+/*
+================================================================================
+                            App.tsx ANALYSIS
+================================================================================
+*/
+
+/*
+IMPORTS AND TYPE DEFINITIONS:
+-----------------------------
+The React frontend uses modern TypeScript with the following structure:
+*/
+import { useState, useEffect, useCallback, useRef } from "react"
+import { createPortal } from "react-dom"
+import AnimatedBackground from "./components/AnimatedBackground"
+import { ConvertNumber, ConvertToAllSystems } from "../wailsjs/go/main/App"
+import { main } from "../wailsjs/go/models"
+
+// NumberSystem type definition for supported systems
+type NumberSystem = {
+    name: string        // System identifier (binary, octal, etc.)
+    base: number        // Mathematical base (2, 8, 10, 16)
+    label: string       // Display name for UI
+    placeholder: string // Example input for user guidance
+}
+
+// Supported number systems configuration
+const numberSystems: NumberSystem[] = [
+    { name: "binary", base: 2, label: "Binary", placeholder: "1010" },
+    { name: "octal", base: 8, label: "Octal", placeholder: "755" },
+    { name: "decimal", base: 10, label: "Decimal", placeholder: "123" },
+    { name: "hexadecimal", base: 16, label: "Hexadecimal", placeholder: "ABC" },
+]
+
+/*
+PORTAL DROPDOWN COMPONENT:
+--------------------------
+Advanced dropdown implementation using React Portals for proper z-index management:
+*/
+function PortalDropdown({ isOpen, onClose, buttonRef, children }: {
+    isOpen: boolean
+    onClose: () => void
+    buttonRef: React.RefObject<HTMLButtonElement>
+    children: React.ReactNode
+}) {
+    const [position, setPosition] = useState({ top: 0, left: 0, width: 0 })
+
+    // Calculate dropdown position based on button location
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect()
+            setPosition({
+                top: rect.bottom + 4,      // Position below button
+                left: rect.left,           // Align with button left edge
+                width: rect.width          // Match button width
+            })
+        }
+    }, [isOpen, buttonRef])
+
+    // Handle click-outside to close dropdown
+    useEffect(() => {
+        if (isOpen) {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+                    onClose()
+                }
+            }
+            document.addEventListener('mousedown', handleClickOutside)
+            return () => document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isOpen, onClose, buttonRef])
+
+    if (!isOpen) return null
+
+    // Render dropdown at document.body level using Portal
+    return createPortal(
+        <div 
+            className="fixed z-[99999] bg-slate-600/90 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-2xl"
+            style={position}
+        >
+            {children}
+        </div>,
+        document.body
+    )
+}
+
+/*
+MAIN COMPONENT STATE MANAGEMENT:
+-------------------------------
+*/
+export default function NumberSystemConverter() {
+    // Core application state
+    const [fromSystem, setFromSystem] = useState("decimal")
+    const [toSystem, setToSystem] = useState("binary")
+    const [inputValue, setInputValue] = useState("")
+    
+    // UI state for dropdowns
+    const [showFromDropdown, setShowFromDropdown] = useState(false)
+    const [showToDropdown, setShowToDropdown] = useState(false)
+    
+    // Refs for dropdown positioning
+    const fromButtonRef = useRef<HTMLButtonElement>(null)
+    const toButtonRef = useRef<HTMLButtonElement>(null)
+    
+    // Conversion results from backend
+    const [mainConversion, setMainConversion] = useState<main.ConversionResult | null>(null)
+    const [autoConversions, setAutoConversions] = useState<main.AllConversionsResult | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+
+/*
+CORE CONVERSION LOGIC:
+---------------------
+*/
+// Memoized conversion function to prevent unnecessary re-renders
+const performConversions = useCallback(async (value: string, fromBase: number, toBase: number) => {
+    if (!value.trim()) {
+        setMainConversion(null)
+        setAutoConversions(null)
+        return
+    }
+
+    setIsLoading(true)
+    try {
+        // Call Go backend for main conversion with steps
+        const mainResult = await ConvertNumber(value, fromBase, toBase)
+        setMainConversion(mainResult)
+
+        // Call Go backend for all system conversions
+        const allResult = await ConvertToAllSystems(value, fromBase)
+        setAutoConversions(allResult)
+    } catch (error) {
+        console.error("Conversion error:", error)
+        setMainConversion({
+            result: "",
+            steps: [],
+            isValid: false,
+            errorMessage: "Conversion failed"
+        })
+        setAutoConversions(null)
+    } finally {
+        setIsLoading(false)
+    }
+}, [])
+
+/*
+DEBOUNCED INPUT HANDLING:
+------------------------
+Prevents excessive API calls during rapid typing:
+*/
+useEffect(() => {
+    const fromBase = getCurrentSystemInfo(fromSystem)?.base || 10
+    const toBase = getCurrentSystemInfo(toSystem)?.base || 2
+    
+    if (inputValue.trim()) {
+        // Debounce input changes by 300ms
+        const timeoutId = setTimeout(() => {
+            performConversions(inputValue, fromBase, toBase)
+        }, 300)
+        
+        return () => clearTimeout(timeoutId)
+    } else {
+        // Clear results when input is empty
+        setMainConversion(null)
+        setAutoConversions(null)
+    }
+}, [inputValue, fromSystem, toSystem, performConversions])
+
+/*
+UTILITY FUNCTIONS:
+-----------------
+*/
+// Get system information by name
+const getCurrentSystemInfo = (systemName: string) => {
+    return numberSystems.find((sys) => sys.name === systemName)
+}
+
+// Handle system swapping
+const handleSwapSystems = () => {
+    const temp = fromSystem
+    setFromSystem(toSystem)
+    setToSystem(temp)
+}
+
+// Handle input changes with uppercase conversion
+const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value.toUpperCase())
+}
+
+// Copy to clipboard functionality
+const copyToClipboard = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text)
+    } catch (error) {
+        console.error("Failed to copy:", error)
+    }
+}
+
+/*
+RENDER STRUCTURE:
+----------------
+The component renders a three-section layout:
+*/
+return (
+    <>
+        {/* Animated background component */}
+        <AnimatedBackground/>
+        
+        <div className="relative min-h-screen overflow-hidden">
+            <div className="p-6 min-h-screen flex flex-col items-center justify-center">
+                
+                {/* Main title with gradient effect */}
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-black bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent tracking-wider drop-shadow-lg mb-2">
+                        Number System Converter
+                    </h1>
+                    <p className="text-white/80 text-lg">
+                        Convert between binary, octal, decimal, and hexadecimal number systems
+                    </p>
+                </div>
+
+                {/* Three-column grid layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto">
+                    
+                    {/* Left column: Main conversion + Auto conversions */}
+                    <div className="lg:col-span-2 space-y-6">
+                        
+                        {/* Main converter card with glassmorphism */}
+                        <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 p-6 space-y-6">
+                            
+                            {/* From section with dropdown */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-white/90">
+                                        From ({getCurrentSystemInfo(fromSystem)?.label})
+                                    </label>
+                                    <div className="relative">
+                                        <button ref={fromButtonRef} /* Portal dropdown implementation *//>
+                                        <PortalDropdown /* Dropdown options *//>
+                                    </div>
+                                </div>
+                                <input /* Input field with validation styling *//>
+                            </div>
+
+                            {/* Swap button with animation */}
+                            <div className="flex justify-center">
+                                <button onClick={handleSwapSystems} /* Swap icon and styling *//>
+                            </div>
+
+                            {/* To section with result display */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label /* To system label *//>
+                                    <div className="relative">
+                                        <button ref={toButtonRef} /* Portal dropdown *//>
+                                        <PortalDropdown /* Dropdown options *//>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input readOnly /* Result display with copy button *//>
+                                    <button onClick={() => copyToClipboard(mainConversion.result)} /* Copy button *//>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Auto conversions card */}
+                        <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 p-6">
+                            <div className="text-center mb-4">
+                                <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Auto Conversions</h3>
+                            </div>
+                            <div>
+                                {isLoading ? (
+                                    /* Loading spinner */
+                                ) : autoConversions?.isValid ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Grid of conversion results with copy buttons */}
+                                    </div>
+                                ) : (
+                                    /* Error or empty state */
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right column: Solution steps */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 h-fit p-6">
+                            <div className="text-center mb-4">
+                                <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Solution Steps</h3>
+                            </div>
+                            <div className="min-h-[300px] max-h-[600px] overflow-y-auto custom-scrollbar">
+                                {isLoading ? (
+                                    /* Loading state */
+                                ) : mainConversion?.isValid && mainConversion.steps.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {mainConversion.steps.map((step, index) => (
+                                            /* Step-by-step display with formatting */
+                                        ))}
+                                    </div>
+                                ) : (
+                                    /* Empty or error state */
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>
+)
+
+/*
+KEY FEATURES IMPLEMENTED:
+------------------------
+
+1. REAL-TIME CONVERSION:
+   - Debounced input handling (300ms) prevents excessive API calls
+   - Immediate visual feedback with loading states
+   - Automatic conversion on system changes
+
+2. ADVANCED UI COMPONENTS:
+   - Portal-based dropdowns for proper z-index management
+   - Glassmorphism design with backdrop-blur effects
+   - Responsive grid layout adapting to screen size
+   - Custom scrollbar styling for solution steps
+
+3. ERROR HANDLING:
+   - Comprehensive input validation on backend
+   - User-friendly error messages in frontend
+   - Graceful fallbacks for failed conversions
+
+4. PERFORMANCE OPTIMIZATION:
+   - Memoized callbacks to prevent unnecessary re-renders
+   - Efficient state management with minimal updates
+   - Lazy loading of conversion results
+
+5. ACCESSIBILITY:
+   - Semantic HTML structure with proper labels
+   - Keyboard navigation support
+   - High contrast design for readability
+   - Screen reader compatible components
+
+TECHNICAL INNOVATIONS:
+--------------------
+- React Portals for dropdown z-index management
+- Persistent animation state using useRef
+- TypeScript integration with Go backend
+- Custom scrollbar implementation
+- Debounced real-time processing
+*/

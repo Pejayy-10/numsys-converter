@@ -183,8 +183,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author
 
-**Frandesal**
+**Fran**
 - Email: frandilbertperuso@gmail.com
+
+**Caddi**
+- Email: ktiking928@gmail.com
+
+**Jude**
+- Email: zoken@gmail.com
 
 ## Acknowledgments
 
