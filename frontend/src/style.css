@@ -28,23 +28,23 @@ body {
     text-align: center;
 }
 
-.bg-timberwolf { background-color: #d8cbc7; }
-.text-timberwolf { color: #d8cbc7; }
-.border-timberwolf { border-color: #d8cbc7; }
+.bg-timberwolf { background-color: #b6b0ae; }
+.text-timberwolf { color: #ececec; }
+.border-timberwolf { border-color: #534d4d; }
 
 .bg-sinopia { background-color: #cc3f0c; }
 .text-sinopia { color: #cc3f0c; }
 .border-sinopia { border-color: #cc3f0c; }
 
 .bg-golden-brown { background-color: #9a6d38; }
-.text-golden-brown { color: #9a6d38; }
+.text-golden-brown { color: #ffa033; }
 .border-golden-brown { border-color: #9a6d38; }
 
-.bg-hunter-green { background-color: #33673b; }
+.bg-hunter-green { background-color: #19331d; }
 .text-hunter-green { color: #33673b; }
-.border-hunter-green { border-color: #33673b; }
+.border-hunter-green { border-color: #fdfffe; }
 
-.bg-eerie-black { background-color: #19231a; }
+.bg-eerie-black { background-color: #58975e; }
 .text-eerie-black { color: #19231a; }
 .border-eerie-black { border-color: #19231a; }
 

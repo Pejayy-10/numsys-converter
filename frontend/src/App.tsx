@@ -61,7 +61,7 @@ export default function NumberSystemConverter() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-timberwolf to-golden-brown/20">
       {/* Navigation Bar */}
-      <nav className="bg-eerie-black shadow-lg border-b border-hunter-green/30">
+      <nav className="bg-hunter-green shadow-lg border-b border-hunter-green/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo/Brand */}
@@ -97,7 +97,7 @@ export default function NumberSystemConverter() {
               </button>
 
               {showConversionsDropdown && (
-                <div className="absolute right-0 top-12 z-30 w-64 bg-eerie-black border border-hunter-green rounded-lg shadow-xl max-h-80 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-12 z-30 w-64 bg-hunter-green rounded-lg shadow-xl max-h-80 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
                   <div className="p-2">
                     <div className="text-xs font-semibold text-golden-brown uppercase tracking-wide px-3 py-2">
                       Available Conversions
@@ -106,7 +106,7 @@ export default function NumberSystemConverter() {
                       <button
                         key={index}
                         onClick={() => handleConversionSelect(conversion.from.name, conversion.to.name)}
-                        className="w-full text-left px-3 py-2 text-sm hover:bg-hunter-green/30 rounded-md flex items-center justify-between group transition-colors duration-150"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-white/30 rounded-md flex items-center justify-between group transition-colors duration-300"
                       >
                         <span className="text-timberwolf">{conversion.label}</span>
                         <svg
@@ -128,18 +128,18 @@ export default function NumberSystemConverter() {
       </nav>
 
       {/* Main Content */}
-      <div className="p-4 flex items-center justify-center min-h-[calc(100vh-4rem)]">
+      <div className="p-4 flex flex-col md:flex-row items-center justify-center min-h-[calc(100vh-4rem)] gap-8">
+        {/* Converter Card */}
         <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-hunter-green/20">
           {/* Header */}
-          <div className="text-center space-y-4 p-8 bg-gradient-to-r from-eerie-black to-hunter-green rounded-t-2xl">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-sinopia to-golden-brown bg-clip-text text-transparent">
+          <div className="text-center space-y-4 p-8 bg-hunter-green rounded-t-2xl">
+            <h1 className="text-3xl font-bold text-golden-brown bg-clip-text">
               Number System Converter
             </h1>
             <p className="text-timberwolf text-lg">
               Convert numbers between binary, octal, decimal, and hexadecimal systems
             </p>
           </div>
-
           <div className="p-8 space-y-8 overflow-visible">
             {/* From Section */}
             <div className="space-y-4">
@@ -269,6 +269,16 @@ export default function NumberSystemConverter() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Solutions Card */}
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-hunter-green/20 flex flex-col">
+          <div className="text-center space-y-4 p-8 bg-gradient-to-r from-hunter-green to-eerie-black rounded-t-2xl">
+            <h2 className="text-2xl font-bold text-golden-brown">Solution Steps</h2>
+            <p className="text-eerie-black text-lg">Step-by-step conversion process will appear here.</p>
+          </div>
+          <div className="p-8 flex-1 flex flex-col justify-center items-center text-eerie-black">
+            <span className="text-lg italic opacity-60">No solution to show yet.</span>
           </div>
         </div>
       </div>
