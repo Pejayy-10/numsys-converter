@@ -129,30 +129,16 @@ export default function NumberSystemConverter() {
     <>
       <AnimatedBackground/>
       <div className="relative min-h-screen overflow-hidden">
-        {/* Navigation Bar */}
-        <nav className="bg-gradient-to-r from-slate-800 to-slate-900 shadow-lg border-b border-slate-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center h-16">
-              {/* Logo/Brand */}
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <span className="text-xl font-bold text-white">NumConverter</span>
-              </div>
-            </div>
-          </div>
-        </nav>
-
         {/* Main Content */}
-        <div className="p-6 min-h-screen flex items-center justify-center">
+        <div className="p-6 min-h-screen flex flex-col items-center justify-center">
+          {/* Centered Title */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent tracking-wider drop-shadow-lg mb-2">
+              Number System Converter
+            </h1>
+            <p className="text-white/80 text-lg">Convert between binary, octal, decimal, and hexadecimal number systems</p>
+          </div>
+
           {/* Main Layout Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-7xl mx-auto">
             
@@ -160,27 +146,17 @@ export default function NumberSystemConverter() {
             <div className="lg:col-span-2 space-y-6">
               
               {/* Main Converter Card */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200">
-                {/* Header */}
-                <div className="text-center space-y-3 p-6 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-xl">
-                  <h1 className="text-2xl font-bold text-white">
-                    Number System Converter
-                  </h1>
-                  <p className="text-slate-200">
-                    Convert numbers between binary, octal, decimal, and hexadecimal systems
-                  </p>
-                </div>
-                <div className="p-6 space-y-6">
+              <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 p-6 space-y-6">
                 {/* From Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-gray-700">
+                    <label className="text-sm font-semibold text-white/90">
                       From ({getCurrentSystemInfo(fromSystem)?.label})
                     </label>
                     <div className="relative">
                       <button
                         onClick={() => setShowFromDropdown(!showFromDropdown)}
-                        className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 transition-colors"
+                        className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-slate-600/35 backdrop-blur border border-slate-400/50 rounded-lg hover:bg-slate-500/45 focus:outline-none focus:ring-2 focus:ring-blue-400 text-white transition-colors"
                       >
                         {getCurrentSystemInfo(fromSystem)?.label}
                         <svg
@@ -193,7 +169,7 @@ export default function NumberSystemConverter() {
                         </svg>
                       </button>
                       {showFromDropdown && (
-                        <div className="absolute top-12 right-0 z-50 w-32 bg-white border border-gray-300 rounded-lg shadow-lg">
+                        <div className="absolute top-12 right-0 z-50 w-32 bg-slate-600/35 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-lg">
                           {numberSystems.map((system) => (
                             <button
                               key={system.name}
@@ -201,8 +177,8 @@ export default function NumberSystemConverter() {
                                 setFromSystem(system.name)
                                 setShowFromDropdown(false)
                               }}
-                              className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 transition-colors ${
-                                system.name === fromSystem ? "bg-blue-50 text-blue-700" : ""
+                              className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
+                                system.name === fromSystem ? "bg-slate-500/45" : ""
                               }`}
                             >
                               {system.label}
@@ -216,12 +192,12 @@ export default function NumberSystemConverter() {
                     value={inputValue}
                     onChange={handleInputChange}
                     placeholder={getCurrentSystemInfo(fromSystem)?.placeholder || ""}
-                    className={`w-full text-lg font-mono h-12 px-4 border-2 rounded-lg focus:outline-none transition-colors text-gray-900 placeholder-gray-400 bg-white ${
-                      mainConversion?.isValid === false ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-blue-500'
+                    className={`w-full text-lg font-mono h-12 px-4 border-2 rounded-lg focus:outline-none transition-colors text-white placeholder-white/50 bg-slate-600/35 backdrop-blur border-slate-400/50 focus:border-blue-400 ${
+                      mainConversion?.isValid === false ? 'border-red-400 focus:border-red-400' : ''
                     }`}
                   />
                   {mainConversion?.isValid === false && (
-                    <p className="text-red-500 text-sm mt-1">{mainConversion.errorMessage}</p>
+                    <p className="text-red-300 text-sm mt-1">{mainConversion.errorMessage}</p>
                   )}
                 </div>
 
@@ -229,7 +205,7 @@ export default function NumberSystemConverter() {
                 <div className="flex justify-center">
                   <button
                     onClick={handleSwapSystems}
-                    className="w-10 h-10 rounded-full border-2 border-gray-300 bg-white hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 flex items-center justify-center text-gray-600 hover:text-blue-600"
+                    className="w-10 h-10 rounded-full border-2 border-slate-400/50 bg-slate-600/35 backdrop-blur hover:border-blue-400 hover:bg-slate-500/45 transition-all duration-200 flex items-center justify-center text-white hover:text-blue-400"
                   >
                     <svg
                       className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300"
@@ -250,13 +226,13 @@ export default function NumberSystemConverter() {
                 {/* To Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-gray-700">
+                    <label className="text-sm font-semibold text-white/90">
                       To ({getCurrentSystemInfo(toSystem)?.label})
                     </label>
                     <div className="relative">
                       <button
                         onClick={() => setShowToDropdown(!showToDropdown)}
-                        className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 transition-colors"
+                        className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-slate-600/35 backdrop-blur border border-slate-400/50 rounded-lg hover:bg-slate-500/45 focus:outline-none focus:ring-2 focus:ring-blue-400 text-white transition-colors"
                       >
                         {getCurrentSystemInfo(toSystem)?.label}
                         <svg
@@ -269,7 +245,7 @@ export default function NumberSystemConverter() {
                         </svg>
                       </button>
                       {showToDropdown && (
-                        <div className="absolute top-12 right-0 z-50 w-32 bg-white border border-gray-300 rounded-lg shadow-lg">
+                        <div className="absolute top-12 right-0 z-50 w-32 bg-slate-600/35 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-lg">
                           {numberSystems.map((system) => (
                             <button
                               key={system.name}
@@ -277,8 +253,8 @@ export default function NumberSystemConverter() {
                                 setToSystem(system.name)
                                 setShowToDropdown(false)
                               }}
-                              className={`w-full px-3 py-2 text-sm text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-gray-700 transition-colors ${
-                                system.name === toSystem ? "bg-blue-50 text-blue-700" : ""
+                              className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
+                                system.name === toSystem ? "bg-slate-500/45" : ""
                               }`}
                             >
                               {system.label}
@@ -292,13 +268,13 @@ export default function NumberSystemConverter() {
                     <input
                       value={mainConversion?.isValid ? mainConversion.result : ""}
                       placeholder={isLoading ? "Converting..." : "Result will appear here"}
-                      className="w-full text-lg font-mono h-12 px-4 pr-12 bg-gray-50 border-2 border-gray-300 rounded-lg text-gray-900 placeholder-gray-400"
+                      className="w-full text-lg font-mono h-12 px-4 pr-12 bg-slate-600/35 backdrop-blur border-2 border-slate-400/50 rounded-lg text-white placeholder-white/50"
                       readOnly
                     />
                     {mainConversion?.isValid && mainConversion.result && (
                       <button 
                         onClick={() => copyToClipboard(mainConversion.result)}
-                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center hover:bg-blue-100 rounded-lg transition-colors text-gray-600 hover:text-blue-600"
+                        className="absolute right-2 top-2 w-8 h-8 flex items-center justify-center hover:bg-slate-500/45 rounded-lg transition-colors text-white hover:text-blue-400"
                         title="Copy to clipboard"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,21 +290,18 @@ export default function NumberSystemConverter() {
                   </div>
                 </div>
               </div>
-              </div>
               
               {/* Auto Conversions Card */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200">
-                <div className="text-center space-y-3 p-6 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-xl">
-                  <h2 className="text-xl font-bold text-white">Auto Conversions</h2>
-                  <p className="text-slate-200">
-                    {inputValue ? `${getCurrentSystemInfo(fromSystem)?.label} to all other systems` : "Automatic conversions will appear here"}
-                  </p>
+              <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 p-6">
+                {/* Small label */}
+                <div className="text-center mb-4">
+                  <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Auto Conversions</h3>
                 </div>
-                <div className="p-6">
+                <div>
                   {isLoading ? (
                     <div className="flex items-center justify-center h-24">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-600"></div>
-                      <span className="ml-3 text-gray-600">Loading conversions...</span>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
+                      <span className="ml-3 text-white/80">Loading conversions...</span>
                     </div>
                   ) : autoConversions?.isValid ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -338,27 +311,27 @@ export default function NumberSystemConverter() {
                         decimal: { label: "Decimal", value: autoConversions.decimal },
                         hexadecimal: { label: "Hexadecimal", value: autoConversions.hexadecimal }
                       }).filter(([key]) => key !== fromSystem).map(([key, { label, value }]) => (
-                        <div key={key} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div key={key} className="bg-slate-600/35 backdrop-blur rounded-lg p-4 border border-slate-400/50">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-gray-700">{label}</h4>
+                            <h4 className="font-semibold text-white">{label}</h4>
                             <button
                               onClick={() => copyToClipboard(value)}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
+                              className="p-1 hover:bg-slate-500/45 rounded transition-colors"
                               title="Copy to clipboard"
                             >
-                              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
                             </button>
                           </div>
-                          <p className="font-mono text-lg text-gray-900 bg-white p-3 rounded border border-gray-200">
+                          <p className="font-mono text-lg text-white bg-slate-500/35 backdrop-blur p-3 rounded border border-slate-400/50">
                             {value}
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : autoConversions?.isValid === false ? (
-                    <div className="flex flex-col items-center justify-center h-24 text-red-500">
+                    <div className="flex flex-col items-center justify-center h-24 text-red-300">
                       <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -366,7 +339,7 @@ export default function NumberSystemConverter() {
                       <span className="text-sm mt-1">{autoConversions.errorMessage}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-24 text-gray-500">
+                    <div className="flex flex-col items-center justify-center h-24 text-white/60">
                       <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
@@ -380,29 +353,27 @@ export default function NumberSystemConverter() {
             {/* Right Column - Solution Steps */}
             <div className="lg:col-span-1">
               {/* Solution Steps Card */}
-              <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 h-fit">
-                <div className="text-center space-y-3 p-6 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-xl">
-                  <h2 className="text-xl font-bold text-white">Solution Steps</h2>
-                  <p className="text-slate-200">
-                    {mainConversion?.isValid ? "Step-by-step conversion process" : "Step-by-step conversion process will appear here"}
-                  </p>
+              <div className="bg-slate-700/25 backdrop-blur-md rounded-xl shadow-2xl border border-slate-500/40 h-fit p-6">
+                {/* Small label */}
+                <div className="text-center mb-4">
+                  <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Solution Steps</h3>
                 </div>
-                <div className="p-6 min-h-[300px]">
+                <div className="min-h-[300px]">
                   {isLoading ? (
                     <div className="flex items-center justify-center h-24">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-600"></div>
-                      <span className="ml-3 text-gray-600">Processing...</span>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
+                      <span className="ml-3 text-white/80">Processing...</span>
                     </div>
                   ) : mainConversion?.isValid && mainConversion.steps.length > 0 ? (
                     <div className="space-y-3">
                       {mainConversion.steps.map((step, index) => (
-                        <div key={index} className="text-gray-800">
+                        <div key={index} className="text-white">
                           {step.startsWith("Step") ? (
-                            <h3 className="font-semibold text-lg text-slate-700 mb-2">{step}</h3>
+                            <h3 className="font-semibold text-lg text-white mb-2">{step}</h3>
                           ) : step.trim() === "" ? (
                             <div className="h-2" />
                           ) : (
-                            <p className="text-sm font-mono bg-gray-50 p-3 rounded-lg border-l-4 border-slate-500">
+                            <p className="text-sm font-mono bg-slate-600/35 backdrop-blur p-3 rounded-lg border-l-4 border-slate-400/60">
                               {step}
                             </p>
                           )}
@@ -410,7 +381,7 @@ export default function NumberSystemConverter() {
                       ))}
                     </div>
                   ) : mainConversion?.isValid === false ? (
-                    <div className="flex flex-col items-center justify-center h-24 text-red-500">
+                    <div className="flex flex-col items-center justify-center h-24 text-red-300">
                       <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -418,7 +389,7 @@ export default function NumberSystemConverter() {
                       <span className="text-sm mt-1">{mainConversion.errorMessage}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-24 text-gray-500">
+                    <div className="flex flex-col items-center justify-center h-24 text-white/60">
                       <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
