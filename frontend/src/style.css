@@ -2,14 +2,13 @@
 @import "tw-animate-css";
 
 html {
-    background-color: rgba(27, 38, 54, 1);
+    background: transparent !important;
     text-align: center;
-    color: white;
 }
 
 body {
+    background: transparent !important;
     margin: 0;
-    color: white;
     font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
     "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
@@ -40,7 +39,7 @@ body {
 .text-golden-brown { color: #ffa033; }
 .border-golden-brown { border-color: #9a6d38; }
 
-.bg-hunter-green { background-color: #19331d; }
+.bg-hunter-green { background-color: #183446; }
 .text-hunter-green { color: #33673b; }
 .border-hunter-green { border-color: #fdfffe; }
 
