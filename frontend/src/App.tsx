@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { createPortal } from "react-dom"
 import AnimatedBackground from "./components/AnimatedBackground";
 import { ConvertNumber, ConvertToAllSystems } from "../wailsjs/go/main/App";
 import { main } from "../wailsjs/go/models";
@@ -36,12 +37,70 @@ const getAllConversions = () => {
   return conversions
 }
 
+// Portal-based dropdown component
+function PortalDropdown({ 
+  isOpen, 
+  onClose, 
+  buttonRef, 
+  children 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  buttonRef: React.RefObject<HTMLButtonElement>; 
+  children: React.ReactNode; 
+}) {
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 })
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPosition({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      })
+    }
+  }, [isOpen, buttonRef])
+
+  useEffect(() => {
+    if (isOpen) {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+          onClose()
+        }
+      }
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen, onClose, buttonRef])
+
+  if (!isOpen) return null
+
+  return createPortal(
+    <div 
+      className="fixed z-[99999] bg-slate-600/90 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-2xl"
+      style={{
+        top: position.top,
+        left: position.left,
+        width: position.width
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  )
+}
+
 export default function NumberSystemConverter() {
   const [fromSystem, setFromSystem] = useState("decimal")
   const [toSystem, setToSystem] = useState("binary")
   const [inputValue, setInputValue] = useState("")
   const [showFromDropdown, setShowFromDropdown] = useState(false)
   const [showToDropdown, setShowToDropdown] = useState(false)
+  
+  // Refs for dropdown positioning
+  const fromButtonRef = useRef<HTMLButtonElement>(null)
+  const toButtonRef = useRef<HTMLButtonElement>(null)
   
   // Conversion results
   const [mainConversion, setMainConversion] = useState<main.ConversionResult | null>(null)
@@ -155,6 +214,7 @@ export default function NumberSystemConverter() {
                     </label>
                     <div className="relative">
                       <button
+                        ref={fromButtonRef}
                         onClick={() => setShowFromDropdown(!showFromDropdown)}
                         className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-slate-600/35 backdrop-blur border border-slate-400/50 rounded-lg hover:bg-slate-500/45 focus:outline-none focus:ring-2 focus:ring-blue-400 text-white transition-colors"
                       >
@@ -168,24 +228,26 @@ export default function NumberSystemConverter() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      {showFromDropdown && (
-                        <div className="absolute top-12 right-0 z-50 w-32 bg-slate-600/35 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-lg">
-                          {numberSystems.map((system) => (
-                            <button
-                              key={system.name}
-                              onClick={() => {
-                                setFromSystem(system.name)
-                                setShowFromDropdown(false)
-                              }}
-                              className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
-                                system.name === fromSystem ? "bg-slate-500/45" : ""
-                              }`}
-                            >
-                              {system.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <PortalDropdown 
+                        isOpen={showFromDropdown} 
+                        onClose={() => setShowFromDropdown(false)} 
+                        buttonRef={fromButtonRef}
+                      >
+                        {numberSystems.map((system) => (
+                          <button
+                            key={system.name}
+                            onClick={() => {
+                              setFromSystem(system.name)
+                              setShowFromDropdown(false)
+                            }}
+                            className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
+                              system.name === fromSystem ? "bg-slate-500/45" : ""
+                            }`}
+                          >
+                            {system.label}
+                          </button>
+                        ))}
+                      </PortalDropdown>
                     </div>
                   </div>
                   <input
@@ -231,6 +293,7 @@ export default function NumberSystemConverter() {
                     </label>
                     <div className="relative">
                       <button
+                        ref={toButtonRef}
                         onClick={() => setShowToDropdown(!showToDropdown)}
                         className="flex items-center justify-between w-32 px-3 py-2 text-sm bg-slate-600/35 backdrop-blur border border-slate-400/50 rounded-lg hover:bg-slate-500/45 focus:outline-none focus:ring-2 focus:ring-blue-400 text-white transition-colors"
                       >
@@ -244,24 +307,26 @@ export default function NumberSystemConverter() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      {showToDropdown && (
-                        <div className="absolute top-12 right-0 z-50 w-32 bg-slate-600/35 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-lg">
-                          {numberSystems.map((system) => (
-                            <button
-                              key={system.name}
-                              onClick={() => {
-                                setToSystem(system.name)
-                                setShowToDropdown(false)
-                              }}
-                              className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
-                                system.name === toSystem ? "bg-slate-500/45" : ""
-                              }`}
-                            >
-                              {system.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      <PortalDropdown 
+                        isOpen={showToDropdown} 
+                        onClose={() => setShowToDropdown(false)} 
+                        buttonRef={toButtonRef}
+                      >
+                        {numberSystems.map((system) => (
+                          <button
+                            key={system.name}
+                            onClick={() => {
+                              setToSystem(system.name)
+                              setShowToDropdown(false)
+                            }}
+                            className={`w-full px-3 py-2 text-sm text-left hover:bg-slate-500/45 first:rounded-t-lg last:rounded-b-lg text-white transition-colors ${
+                              system.name === toSystem ? "bg-slate-500/45" : ""
+                            }`}
+                          >
+                            {system.label}
+                          </button>
+                        ))}
+                      </PortalDropdown>
                     </div>
                   </div>
                   <div className="relative">
@@ -311,12 +376,12 @@ export default function NumberSystemConverter() {
                         decimal: { label: "Decimal", value: autoConversions.decimal },
                         hexadecimal: { label: "Hexadecimal", value: autoConversions.hexadecimal }
                       }).filter(([key]) => key !== fromSystem).map(([key, { label, value }]) => (
-                        <div key={key} className="bg-slate-600/35 backdrop-blur rounded-lg p-4 border border-slate-400/50">
+                        <div key={key} className="bg-slate-600/35 backdrop-blur rounded-lg p-4 border border-slate-400/50 min-w-0">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-white">{label}</h4>
+                            <h4 className="font-semibold text-white truncate mr-2">{label}</h4>
                             <button
                               onClick={() => copyToClipboard(value)}
-                              className="p-1 hover:bg-slate-500/45 rounded transition-colors"
+                              className="p-1 hover:bg-slate-500/45 rounded transition-colors flex-shrink-0"
                               title="Copy to clipboard"
                             >
                               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,7 +389,7 @@ export default function NumberSystemConverter() {
                               </svg>
                             </button>
                           </div>
-                          <p className="font-mono text-lg text-white bg-slate-500/35 backdrop-blur p-3 rounded border border-slate-400/50">
+                          <p className="font-mono text-lg text-white bg-slate-500/35 backdrop-blur p-3 rounded border border-slate-400/50 break-all overflow-wrap-anywhere">
                             {value}
                           </p>
                         </div>
@@ -358,7 +423,9 @@ export default function NumberSystemConverter() {
                 <div className="text-center mb-4">
                   <h3 className="text-sm font-medium text-white/70 uppercase tracking-wider">Solution Steps</h3>
                 </div>
-                <div className="min-h-[300px]">
+                <div 
+                  className="min-h-[300px] max-h-[600px] overflow-y-auto custom-scrollbar"
+                >
                   {isLoading ? (
                     <div className="flex items-center justify-center h-24">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white/60"></div>
@@ -373,7 +440,7 @@ export default function NumberSystemConverter() {
                           ) : step.trim() === "" ? (
                             <div className="h-2" />
                           ) : (
-                            <p className="text-sm font-mono bg-slate-600/35 backdrop-blur p-3 rounded-lg border-l-4 border-slate-400/60">
+                            <p className="text-sm font-mono bg-slate-600/35 backdrop-blur p-3 rounded-lg border-l-4 border-slate-400/60 break-words overflow-wrap-anywhere">
                               {step}
                             </p>
                           )}
