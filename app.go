@@ -2,23 +2,33 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 )
-
-// ConversionResult represents the result of a number system conversion
-type ConversionResult struct {
-	Result   string   `json:"result"`
-	Steps    []string `json:"steps"`
-	IsValid  bool     `json:"isValid"`
-	ErrorMsg string   `json:"errorMsg"`
-}
 
 // App struct
 type App struct {
 	ctx context.Context
+}
+
+// ConversionResult represents the result of a number conversion
+type ConversionResult struct {
+	Result       string   `json:"result"`
+	Steps        []string `json:"steps"`
+	IsValid      bool     `json:"isValid"`
+	ErrorMessage string   `json:"errorMessage"`
+}
+
+// AllConversionsResult represents conversions to all other number systems
+type AllConversionsResult struct {
+	Binary       string `json:"binary"`
+	Octal        string `json:"octal"`
+	Decimal      string `json:"decimal"`
+	Hexadecimal  string `json:"hexadecimal"`
+	IsValid      bool   `json:"isValid"`
+	ErrorMessage string `json:"errorMessage"`
 }
 
 // NewApp creates a new App application struct
@@ -31,103 +41,252 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// ConvertNumber converts a number between different bases and provides step-by-step solution
-func (a *App) ConvertNumber(input string, fromBase int, toBase int) ConversionResult {
-	result := ConversionResult{
-		Steps: make([]string, 0),
+// ConvertNumber converts a number from one base to another with detailed steps
+func (a *App) ConvertNumber(value string, fromBase int, toBase int) ConversionResult {
+	// Clean the input
+	value = strings.TrimSpace(strings.ToUpper(value))
+
+	if value == "" {
+		return ConversionResult{
+			Result:       "",
+			Steps:        []string{},
+			IsValid:      false,
+			ErrorMessage: "Input cannot be empty",
+		}
 	}
 
-	// Validate input bases
-	if fromBase < 2 || fromBase > 36 || toBase < 2 || toBase > 36 {
-		result.IsValid = false
-		result.ErrorMsg = "Base must be between 2 and 36"
-		return result
+	// Validate input for the given base
+	if !isValidForBase(value, fromBase) {
+		return ConversionResult{
+			Result:       "",
+			Steps:        []string{},
+			IsValid:      false,
+			ErrorMessage: fmt.Sprintf("Invalid input '%s' for base %d", value, fromBase),
+		}
 	}
 
-	// Remove spaces and convert to uppercase for consistency
-	input = strings.TrimSpace(strings.ToUpper(input))
+	// Convert to decimal first
+	decimalValue, err := convertToDecimal(value, fromBase)
+	if err != nil {
+		return ConversionResult{
+			Result:       "",
+			Steps:        []string{},
+			IsValid:      false,
+			ErrorMessage: err.Error(),
+		}
+	}
 
-	// Validate input string against fromBase
-	for _, c := range input {
-		val := 0
-		if c >= '0' && c <= '9' {
-			val = int(c - '0')
-		} else if c >= 'A' && c <= 'Z' {
-			val = int(c-'A') + 10
+	// Convert from decimal to target base
+	result, steps := convertFromDecimal(decimalValue, toBase, value, fromBase)
+
+	return ConversionResult{
+		Result:       result,
+		Steps:        steps,
+		IsValid:      true,
+		ErrorMessage: "",
+	}
+}
+
+// ConvertToAllSystems converts a number to all other number systems
+func (a *App) ConvertToAllSystems(value string, fromBase int) AllConversionsResult {
+	value = strings.TrimSpace(strings.ToUpper(value))
+
+	if value == "" {
+		return AllConversionsResult{
+			Binary:       "",
+			Octal:        "",
+			Decimal:      "",
+			Hexadecimal:  "",
+			IsValid:      false,
+			ErrorMessage: "Input cannot be empty",
+		}
+	}
+
+	if !isValidForBase(value, fromBase) {
+		return AllConversionsResult{
+			Binary:       "",
+			Octal:        "",
+			Decimal:      "",
+			Hexadecimal:  "",
+			IsValid:      false,
+			ErrorMessage: fmt.Sprintf("Invalid input '%s' for base %d", value, fromBase),
+		}
+	}
+
+	// Convert to decimal first
+	decimalValue, err := convertToDecimal(value, fromBase)
+	if err != nil {
+		return AllConversionsResult{
+			Binary:       "",
+			Octal:        "",
+			Decimal:      "",
+			Hexadecimal:  "",
+			IsValid:      false,
+			ErrorMessage: err.Error(),
+		}
+	}
+
+	// Convert to all bases
+	binary, _ := convertFromDecimal(decimalValue, 2, value, fromBase)
+	octal, _ := convertFromDecimal(decimalValue, 8, value, fromBase)
+	decimal, _ := convertFromDecimal(decimalValue, 10, value, fromBase)
+	hexadecimal, _ := convertFromDecimal(decimalValue, 16, value, fromBase)
+
+	return AllConversionsResult{
+		Binary:       binary,
+		Octal:        octal,
+		Decimal:      decimal,
+		Hexadecimal:  hexadecimal,
+		IsValid:      true,
+		ErrorMessage: "",
+	}
+}
+
+// isValidForBase checks if a string is valid for the given base
+func isValidForBase(value string, base int) bool {
+	for _, char := range value {
+		digit := 0
+		if char >= '0' && char <= '9' {
+			digit = int(char - '0')
+		} else if char >= 'A' && char <= 'F' {
+			digit = int(char - 'A' + 10)
 		} else {
-			result.IsValid = false
-			result.ErrorMsg = fmt.Sprintf("Invalid character '%c' for base-%d", c, fromBase)
-			return result
+			return false
 		}
-		if val >= fromBase {
-			result.IsValid = false
-			result.ErrorMsg = fmt.Sprintf("Digit '%c' is not valid in base-%d", c, fromBase)
-			return result
+		if digit >= base {
+			return false
 		}
 	}
+	return true
+}
 
-	// Convert to decimal first (if not already decimal)
-	decimal := int64(0)
+// convertToDecimal converts a number from any base to decimal
+func convertToDecimal(value string, fromBase int) (int64, error) {
+	result := int64(0)
+	power := int64(1)
+
+	// Process from right to left
+	for i := len(value) - 1; i >= 0; i-- {
+		char := value[i]
+		digit := 0
+
+		if char >= '0' && char <= '9' {
+			digit = int(char - '0')
+		} else if char >= 'A' && char <= 'F' {
+			digit = int(char - 'A' + 10)
+		}
+
+		if digit >= fromBase {
+			return 0, errors.New("invalid digit for base")
+		}
+
+		result += int64(digit) * power
+		power *= int64(fromBase)
+	}
+
+	return result, nil
+}
+
+// convertFromDecimal converts a decimal number to any base with steps
+func convertFromDecimal(decimal int64, toBase int, originalValue string, fromBase int) (string, []string) {
+	if decimal == 0 {
+		steps := generateSteps(originalValue, fromBase, toBase, decimal, "0")
+		return "0", steps
+	}
+
+	digits := "0123456789ABCDEF"
+	result := ""
+	steps := []string{}
+	tempDecimal := decimal
+	stepNumber := 1
+
+	// Generate conversion steps
 	if fromBase != 10 {
-		result.Steps = append(result.Steps, fmt.Sprintf("Step 1: Convert %s (base-%d) to decimal", input, fromBase))
+		steps = append(steps, fmt.Sprintf("Step %d: Convert %s (base %d) to decimal", stepNumber, originalValue, fromBase))
 
-		for i, c := range input {
-			val := 0
-			if c >= '0' && c <= '9' {
-				val = int(c - '0')
-			} else {
-				val = int(c-'A') + 10
+		// Show positional calculation
+		positionSteps := []string{}
+		for i, char := range originalValue {
+			pos := len(originalValue) - 1 - i
+			digit := 0
+			if char >= '0' && char <= '9' {
+				digit = int(char - '0')
+			} else if char >= 'A' && char <= 'F' {
+				digit = int(char - 'A' + 10)
 			}
-			power := len(input) - 1 - i
-			contribution := val * int(math.Pow(float64(fromBase), float64(power)))
-			decimal += int64(contribution)
 
-			result.Steps = append(result.Steps,
-				fmt.Sprintf("   %c × %d^%d = %d", c, fromBase, power, contribution))
+			if pos == 0 {
+				positionSteps = append(positionSteps, fmt.Sprintf("%d × %d⁰ = %d", digit, fromBase, digit))
+			} else {
+				positionSteps = append(positionSteps, fmt.Sprintf("%d × %d^%d = %d", digit, fromBase, pos, digit*int(math.Pow(float64(fromBase), float64(pos)))))
+			}
 		}
-		result.Steps = append(result.Steps, fmt.Sprintf("Decimal result: %d", decimal))
-	} else {
-		var err error
-		decimal, err = strconv.ParseInt(input, 10, 64)
-		if err != nil {
-			result.IsValid = false
-			result.ErrorMsg = "Invalid decimal number"
-			return result
-		}
+		steps = append(steps, "   "+strings.Join(positionSteps, " + "))
+		steps = append(steps, fmt.Sprintf("   = %d (decimal)", decimal))
+		steps = append(steps, "")
+		stepNumber++
 	}
 
-	// Convert from decimal to target base (if not staying in decimal)
 	if toBase != 10 {
-		result.Steps = append(result.Steps, fmt.Sprintf("\nStep 2: Convert %d to base-%d", decimal, toBase))
+		steps = append(steps, fmt.Sprintf("Step %d: Convert %d (decimal) to base %d", stepNumber, decimal, toBase))
+		divisionSteps := []string{}
 
-		var digits []string
-		temp := decimal
-
-		for temp > 0 {
-			remainder := temp % int64(toBase)
-			digit := ""
-			if remainder < 10 {
-				digit = strconv.FormatInt(remainder, 10)
-			} else {
-				digit = string('A' + rune(remainder-10))
-			}
-			digits = append([]string{digit}, digits...)
-
-			result.Steps = append(result.Steps,
-				fmt.Sprintf("   %d ÷ %d = %d remainder %d (%s)",
-					temp, toBase, temp/int64(toBase), remainder, digit))
-
-			temp = temp / int64(toBase)
+		// Perform division and collect steps
+		for tempDecimal > 0 {
+			remainder := tempDecimal % int64(toBase)
+			quotient := tempDecimal / int64(toBase)
+			divisionSteps = append(divisionSteps, fmt.Sprintf("   %d ÷ %d = %d remainder %s", tempDecimal, toBase, quotient, string(digits[remainder])))
+			result = string(digits[remainder]) + result
+			tempDecimal = quotient
 		}
 
-		result.Result = strings.Join(digits, "")
-		if result.Result == "" {
-			result.Result = "0"
-		}
+		steps = append(steps, divisionSteps...)
+		steps = append(steps, fmt.Sprintf("   Reading remainders from bottom to top: %s", result))
 	} else {
-		result.Result = strconv.FormatInt(decimal, 10)
+		result = fmt.Sprintf("%d", decimal)
 	}
 
-	result.IsValid = true
-	return result
+	if len(steps) == 0 {
+		steps = generateSteps(originalValue, fromBase, toBase, decimal, result)
+	}
+
+	return result, steps
+}
+
+// generateSteps creates detailed conversion steps
+func generateSteps(originalValue string, fromBase, toBase int, decimal int64, result string) []string {
+	baseNames := map[int]string{
+		2:  "Binary",
+		8:  "Octal",
+		10: "Decimal",
+		16: "Hexadecimal",
+	}
+
+	fromName := baseNames[fromBase]
+	toName := baseNames[toBase]
+
+	if fromBase == toBase {
+		return []string{fmt.Sprintf("No conversion needed: %s is already in %s", originalValue, fromName)}
+	}
+
+	// Handle special cases for better explanations
+	if fromBase == 10 && toBase != 10 {
+		return []string{
+			fmt.Sprintf("Converting %s from %s to %s", originalValue, fromName, toName),
+			fmt.Sprintf("Since the input is already decimal (%d), we can directly convert to %s", decimal, toName),
+			fmt.Sprintf("Result: %s", result),
+		}
+	} else if fromBase != 10 && toBase == 10 {
+		return []string{
+			fmt.Sprintf("Converting %s from %s to %s", originalValue, fromName, toName),
+			fmt.Sprintf("Using positional notation to convert from %s to decimal", fromName),
+			fmt.Sprintf("Result: %s", result),
+		}
+	} else {
+		return []string{
+			fmt.Sprintf("Converting %s from %s to %s", originalValue, fromName, toName),
+			fmt.Sprintf("This requires two steps: %s → Decimal → %s", fromName, toName),
+			fmt.Sprintf("Result: %s", result),
+		}
+	}
 }
