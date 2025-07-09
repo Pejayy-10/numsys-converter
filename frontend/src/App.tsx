@@ -50,6 +50,7 @@ function PortalDropdown({
   children: React.ReactNode; 
 }) {
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 })
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -65,7 +66,14 @@ function PortalDropdown({
   useEffect(() => {
     if (isOpen) {
       const handleClickOutside = (event: MouseEvent) => {
-        if (buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
+        const target = event.target as Node
+        // Check if click is outside both button and dropdown
+        if (
+          buttonRef.current && 
+          !buttonRef.current.contains(target) &&
+          dropdownRef.current &&
+          !dropdownRef.current.contains(target)
+        ) {
           onClose()
         }
       }
@@ -78,6 +86,7 @@ function PortalDropdown({
 
   return createPortal(
     <div 
+      ref={dropdownRef}
       className="fixed z-[99999] bg-slate-600/90 backdrop-blur-md border border-slate-400/50 rounded-lg shadow-2xl"
       style={{
         top: position.top,
